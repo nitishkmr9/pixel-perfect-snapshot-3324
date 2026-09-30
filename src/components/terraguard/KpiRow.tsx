@@ -1,5 +1,6 @@
 import { currency } from "@/lib/terraguard-data";
 import type { StreamState } from "@/lib/use-fraud-stream";
+import { useCountUp } from "./CountUp";
 
 function Kpi({
   label,
@@ -40,6 +41,7 @@ function Kpi({
 
 export function KpiRow({ state }: { state: StreamState }) {
   const risk = state.latest ? Math.round(state.latest.risk * 100) : 0;
+  const loss = useCountUp(state.lossPrevented);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -57,7 +59,7 @@ export function KpiRow({ state }: { state: StreamState }) {
       />
       <Kpi
         label="Loss Prevented"
-        value={currency(state.lossPrevented)}
+        value={currency(loss)}
         tone="success"
         hint="blocked transaction value"
       />
