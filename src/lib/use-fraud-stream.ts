@@ -42,7 +42,7 @@ export function useFraudStream(intervalMs = 900, perTick = 2) {
         const newAlerts: Txn[] = [];
 
         for (const t of batch) {
-          buckets[Math.min(9, Math.floor(t.risk * 10))] += 1;
+          buckets[Math.min(9, Math.floor(t.risk * 10))]! += 1;
           if (t.action !== "ALLOW") {
             threats += 1;
             newAlerts.push(t);
@@ -56,7 +56,7 @@ export function useFraudStream(intervalMs = 900, perTick = 2) {
           { t: tick.current, txns: batch.length, threats },
         ].slice(-40);
 
-        const latest = batch[batch.length - 1];
+        const latest = batch[batch.length - 1] ?? null;
 
         return {
           scored: prev.scored + batch.length,

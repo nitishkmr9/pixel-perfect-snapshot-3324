@@ -81,7 +81,7 @@ const LABELS = Array.from(
 );
 
 export function RiskDistribution({ buckets }: { buckets: number[] }) {
-  const data = buckets.map((count, i) => ({ bucket: LABELS[i], count, i }));
+  const data = buckets.map((count, i) => ({ bucket: LABELS[i]!, count, i }));
 
   return (
     <section className="panel p-5">

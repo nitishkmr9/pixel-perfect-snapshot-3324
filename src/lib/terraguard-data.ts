@@ -67,8 +67,8 @@ function mulberry32(seed: number) {
 }
 
 function makeTxn(rand: () => number, index: number): Txn {
-  const merchant = MERCHANTS[Math.floor(rand() * MERCHANTS.length)];
-  const city = CITIES[Math.floor(rand() * CITIES.length)];
+  const merchant = MERCHANTS[Math.floor(rand() * MERCHANTS.length)]!;
+  const city = CITIES[Math.floor(rand() * CITIES.length)]!;
   const hot = HIGH_RISK_MERCHANTS.has(merchant);
 
   const roll = rand();
@@ -104,7 +104,7 @@ export const TRANSACTIONS: Txn[] = (() => {
 
 /** Endless stream over the embedded dataset, re-labelled with fresh ids. */
 export function txnAt(cursor: number): Txn {
-  const base = TRANSACTIONS[cursor % TRANSACTIONS.length];
+  const base = TRANSACTIONS[cursor % TRANSACTIONS.length]!;
   return { ...base, id: `TXN-${920000 + cursor}` };
 }
 
