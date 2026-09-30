@@ -1,0 +1,1 @@
+- [ ] Preserve a working standalone index.html demo backup for service outages.

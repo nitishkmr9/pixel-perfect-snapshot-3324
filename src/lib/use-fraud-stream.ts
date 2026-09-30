@@ -69,7 +69,7 @@ export function useFraudStream(intervalMs = 900, perTick = 2) {
           latest,
           ticks,
           buckets,
-          alerts: [...newAlerts.reverse(), ...prev.alerts].slice(0, 40),
+          alerts: [...prev.alerts, ...newAlerts].slice(-40),
         };
       });
     }, intervalMs);
