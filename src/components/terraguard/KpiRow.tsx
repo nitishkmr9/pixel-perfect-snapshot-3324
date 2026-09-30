@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { currency } from "@/lib/terraguard-data";
 import type { StreamState } from "@/lib/use-fraud-stream";
 
@@ -40,6 +41,36 @@ function Kpi({
 
 export function KpiRow({ state }: { state: StreamState }) {
   const risk = state.latest ? Math.round(state.latest.risk * 100) : 0;
+  const [displayedLoss, setDisplayedLoss] = useState(state.lossPrevented);
+  const displayedLossRef = useRef(state.lossPrevented);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      displayedLossRef.current = state.lossPrevented;
+      setDisplayedLoss(state.lossPrevented);
+      return;
+    }
+
+    const startValue = displayedLossRef.current;
+    const difference = state.lossPrevented - startValue;
+    if (difference === 0) return;
+
+    const startedAt = performance.now();
+    const duration = 600;
+    let frame = 0;
+
+    const animate = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const nextValue = startValue + difference * eased;
+      displayedLossRef.current = nextValue;
+      setDisplayedLoss(nextValue);
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [state.lossPrevented]);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -57,7 +88,7 @@ export function KpiRow({ state }: { state: StreamState }) {
       />
       <Kpi
         label="Loss Prevented"
-        value={currency(state.lossPrevented)}
+        value={currency(displayedLoss)}
         tone="success"
         hint="blocked transaction value"
       />

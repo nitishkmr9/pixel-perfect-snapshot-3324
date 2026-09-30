@@ -1,6 +1,69 @@
+import { useEffect, useRef } from "react";
 import { ACTION_STYLES, currency, type Txn } from "@/lib/terraguard-data";
 
 export function AlertFeed({ alerts }: { alerts: Txn[] }) {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const seenAlertIdsRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const enableAudio = () => {
+      const audioContext = new AudioContext();
+      void audioContext.resume();
+      audioContextRef.current = audioContext;
+      document.removeEventListener("pointerdown", enableAudio);
+      document.removeEventListener("keydown", enableAudio);
+    };
+
+    document.addEventListener("pointerdown", enableAudio, { once: true });
+    document.addEventListener("keydown", enableAudio, { once: true });
+
+    return () => {
+      document.removeEventListener("pointerdown", enableAudio);
+      document.removeEventListener("keydown", enableAudio);
+      const audioContext = audioContextRef.current;
+      audioContextRef.current = null;
+      if (audioContext) void audioContext.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    const unseenAlerts = alerts.filter(
+      (alert) => !seenAlertIdsRef.current.has(alert.id),
+    );
+    alerts.forEach((alert) => seenAlertIdsRef.current.add(alert.id));
+
+    if (!unseenAlerts.some((alert) => alert.action === "BLOCK")) return;
+
+    const audioContext = audioContextRef.current;
+    if (!audioContext || audioContext.state !== "running") return;
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, now);
+    oscillator.frequency.exponentialRampToValueAtTime(1320, now + 0.1);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.17);
+  }, [alerts]);
+
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea || alerts.length === 0) return;
+    scrollArea.scrollTo({
+      top: scrollArea.scrollHeight,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+  }, [alerts]);
+
   return (
     <section className="panel flex h-[420px] flex-col p-5">
       <div className="flex items-center justify-between">
@@ -10,7 +73,7 @@ export function AlertFeed({ alerts }: { alerts: Txn[] }) {
         <span className="text-xs text-muted-foreground">latest 40</span>
       </div>
 
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+      <div ref={scrollAreaRef} className="mt-3 min-h-0 flex-1 overflow-y-auto">
         <table className="w-full border-separate border-spacing-0 text-left text-xs">
           <thead className="sticky top-0 bg-card">
             <tr className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
